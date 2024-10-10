@@ -13,6 +13,7 @@
   - number of anchor boxes: 896
   - Based on **SSD architecture** - predefined anchor boxes, but less than in SSD (Due to limited variance in human computing smaller feature maps is redundant)
   <img alt="ssd vs blazeface" src="../assets/BlazeFace-anchors.png" width="600px"/>
+  
   -  **depthwise convolutions** with kernels 5x5 - decreasing the total amount of bottlenecks required to reach a particular receptive field size, thus reducing the number of parameters and computations
 
 - Inference details:
