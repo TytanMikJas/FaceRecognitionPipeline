@@ -82,11 +82,37 @@ def get_idx_of_biggest_face(detections: np.ndarray) -> int:
    return int(np.apply_along_axis(lambda x: (x[2] - x[0]) * (x[3] - x[1]), 1, detections).argmax())
 
 
-def crop_face_from_img(img: MatLike, detections: MatLike) -> MatLike:
+def reset_face_angle(detections: MatLike) -> MatLike:
+   ...
+
+class Margin:
+  def __init__(self, top: int|str, right: int|str, left: int|str, bottom: int|str):
+      self.top = top
+      self.right = right
+      self.left = left
+      self.bottom = bottom
+
+  def get_margin(self, value: int, margin: int|str):
+    if isinstance(margin, int):
+      return margin
+    elif margin.endswith("%"):
+      return int(value * int(margin[:-1]) / 100)
+  
+
+  def recalculate_coordinates(self, y_min, x_min, y_max, x_max):
+     y_min -= self.get_margin(y_min, self.top)
+     x_min -= self.get_margin(x_min, self.left)
+     y_max += self.get_margin(y_max, self.bottom)
+     x_max += self.get_margin(x_max, self.right)
+
+     return y_min, x_min, y_max, x_max  
+   
+
+def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> MatLike:
   y_min = int(detections[0] * img.shape[0])
   x_min = int(detections[1] * img.shape[1])
   y_max = int(detections[2] * img.shape[0])
   x_max = int(detections[3] * img.shape[1])
 
-  print(y_min, x_min, y_max, x_max)
+  y_min, x_min, y_max, x_max = margin.recalculate_coordinates(y_min, x_min, y_max, x_max)
   return img[y_min:y_max, x_min:x_max]
