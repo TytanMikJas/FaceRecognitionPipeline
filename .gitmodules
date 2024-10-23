@@ -1,3 +1,0 @@
-[submodule "utils/libs/BlazeFace-PyTorch"]
-	path = utils/libs/BlazeFace-PyTorch
-	url = https://github.com/hollance/BlazeFace-PyTorch
