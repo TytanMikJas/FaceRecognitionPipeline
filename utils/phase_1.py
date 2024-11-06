@@ -5,7 +5,10 @@ from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
 import torch
 
+import sys
+sys.path.append('./../')
 from utils.libs.BlazeFace.blazeface import BlazeFace
+
 
 def take_photo() -> MatLike: # type: ignore
   camera = cv2.VideoCapture(0)
@@ -17,7 +20,6 @@ def take_photo() -> MatLike: # type: ignore
     if not ok:
       continue
     
-    # cv2.imwrite("debug-photo.jpg", frame)
     camera.release()
     return frame
   
@@ -126,3 +128,48 @@ def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> Mat
 
   y_min, x_min, y_max, x_max = margin.recalculate_coordinates(y_min, x_min, y_max, x_max)
   return img[y_min:y_max, x_min:x_max]
+
+BLAZEFACE_INPUT_SIZE = (128, 128)
+
+class PhaseOne:
+  def __init__(self, margin: Margin = Margin("30%", 5, 15, 5)):
+    self.device = get_torch_device()
+    self.margin = margin 
+    self.model = load_blazeface("../utils/libs/BlazeFace/", self.device)
+    configure_params(self.model, 0.75, 0.3)
+
+  def _predict(self, img: MatLike):
+    downsized_img = downsize_img(img, BLAZEFACE_INPUT_SIZE)
+    # view_img(downsized_img)
+    detections = self.model.predict_on_image(downsized_img)
+    print(detections)
+    return detections
+  
+  def run(self, img: MatLike) -> MatLike | str:
+    detections = self._predict(img)
+
+    if len(detections) == 0:
+      return "No face detected"
+    
+    biggest_face_idx = get_idx_of_biggest_face(detections)
+    img = reset_face_angle(img, detections[biggest_face_idx])
+    
+    detections = self._predict(img)
+    biggest_face_idx = get_idx_of_biggest_face(detections)
+    img = crop_face_from_img(img, detections[biggest_face_idx], self.margin)
+
+    return img
+
+
+if __name__ == "__main__": 
+   # dont run it from project root. Enter any folder like /utils/ or /src/ 
+   phaseOne = PhaseOne()
+   img = cv2.imread("../assets/the-office-handshake.jpg")
+   img = reverse_channels(img)
+   out = phaseOne.run(img)
+   if isinstance(out, str):
+     print(out)
+     exit()
+
+   cv2.imshow("Face", cv2.cvtColor(out, cv2.COLOR_BGR2RGB)) 
+   cv2.waitKey(0)
