@@ -81,9 +81,19 @@ def plot_detections(img, detections, with_keypoints=True):
 def get_idx_of_biggest_face(detections: np.ndarray) -> int: 
    return int(np.apply_along_axis(lambda x: (x[2] - x[0]) * (x[3] - x[1]), 1, detections).argmax())
 
+def reset_face_angle(img: MatLike, detections: list) -> MatLike:
+  right_eye = (int(detections[4] * img.shape[1]), int(detections[5] * img.shape[0]))
+  left_eye = (int(detections[6] * img.shape[1]), int(detections[7] * img.shape[0]))
 
-def reset_face_angle(detections: MatLike) -> MatLike:
-   ...
+  w, h = img.shape[:2]
+
+  angle = np.arctan2(left_eye[1] - right_eye[1], left_eye[0] - right_eye[0])
+  angle = np.degrees(angle)
+
+  M = cv2.getRotationMatrix2D(right_eye, angle, scale=1)
+  rotated = cv2.warpAffine(img, M, (w, h))
+
+  return rotated
 
 class Margin:
   def __init__(self, top: int|str, right: int|str, left: int|str, bottom: int|str):

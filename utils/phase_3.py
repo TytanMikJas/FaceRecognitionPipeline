@@ -3,12 +3,12 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from numpy import genfromtxt
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Conv2D, ZeroPadding2D, Activation, Input, concatenate
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.layers import MaxPooling2D, AveragePooling2D
-from tensorflow.keras.layers import Lambda, Flatten, Dense
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.layers import (
+  Conv2D, ZeroPadding2D, Activation, Input, concatenate, MaxPooling2D, AveragePooling2D, Lambda, Flatten, Dense 
+)
+from tensorflow.python.keras.models import Model
+from tensorflow.keras.layers import BatchNormalization # type: ignore
 
 K.set_image_data_format('channels_first')
 
@@ -80,7 +80,7 @@ conv_shape = {
 }
 
 def conv2d_bn(x,
-                layer=None,
+                layer:str,
                 cv1_out=None,
                 cv1_filter=(1, 1),
                 cv1_strides=(1, 1),
@@ -375,10 +375,7 @@ def load_weights_from_FaceNet(model):
     weights_dict = load_weights()
 
     for name in weights:
-        if model.get_layer(name) != None:
-            model.get_layer(name).set_weights(weights_dict[name])
-        elif model.get_layer(name) != None:
-            model.get_layer(name).set_weights(weights_dict[name])
+        model.get_layer(name).set_weights(weights_dict[name])
 
 def load_weights():
 
