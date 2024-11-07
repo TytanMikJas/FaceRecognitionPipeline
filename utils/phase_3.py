@@ -3,11 +3,11 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from numpy import genfromtxt
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.layers import (
+from tensorflow.keras import backend as K # type: ignore
+from tensorflow.keras.layers import ( # type: ignore
   Conv2D, ZeroPadding2D, Activation, Input, concatenate, MaxPooling2D, AveragePooling2D, Lambda, Flatten, Dense 
-)
-from tensorflow.python.keras.models import Model
+) 
+from tensorflow.keras.models import Model # type: ignore
 from tensorflow.keras.layers import BatchNormalization # type: ignore
 
 K.set_image_data_format('channels_first')
