@@ -9,13 +9,13 @@ import cv2
     that can occur while scanning your face for recignition.
 """
 custom_agumentations = [
-            A.RandomBrightnessContrast(brightness_limit=(-0.5, -0.2), p=1),
-            A.RandomBrightnessContrast(brightness_limit=(0.2, 0.5), p=1),
-            A.RandomSunFlare(num_flare_circles_range=(14, 17), flare_roi=(0, 0, 1, 0.3), src_radius=800, method='physics_based', p=1),
-            A.RandomRain(rain_type='heavy', p=1),
-            A.GaussianBlur(blur_limit=(9, 9), p=1),
-            A.Downscale(scale_min=0.7, scale_max=0.7, p=1),
-            A.GaussNoise(var_limit=(99, 99), mean=70, per_channel=True, p=1)
+            A.RandomBrightnessContrast(brightness_limit=(-0.42, -0.27), contrast_limit=(-0.1, 0), brightness_by_max=True , p=1),
+            A.RandomBrightnessContrast(brightness_limit=(0.28, 0.4), contrast_limit=(0, -0.1), brightness_by_max=True , p=1),
+            A.RandomSunFlare(num_flare_circles_range=(14, 17), flare_roi=(0.2, 0, 0.8, 0.2), src_radius=800, method='physics_based', p=1),
+            A.RandomRain(p=1, rain_type='default', slant_range=(-7, 7), drop_width=1, drop_length=5, brightness_coefficient=0.85, blur_value=6),
+            A.GaussianBlur(blur_limit=(7, 11), sigma_limit=(1, 10), p=1),
+            A.Downscale(scale_range=(0.1, 0.2), p=1),
+            A.GaussNoise(var_limit=(300, 500), mean=0, per_channel=True, p=1)
         ]
 
 basic_agumentations = [
