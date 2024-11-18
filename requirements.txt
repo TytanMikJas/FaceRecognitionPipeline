@@ -6,3 +6,5 @@ opencv_python_headless==4.10.0.84
 Pillow==9.4.0
 Pillow==11.0.0
 torch==2.1.0
+albumentations==1.4.21
+tensorflow==2.13.1
