@@ -110,14 +110,20 @@ class Margin:
     elif margin.endswith("%"):
       return int(value * int(margin[:-1]) / 100)
   
+  def _put_coordinates_in_range(self, value: int, max_value: int):
+    return max(0, min(value, max_value))
+  
+  def recalculate_coordinates(self, y_min, x_min, y_max, x_max, height, width):
+    y_min -= self.get_margin(y_min, self.top)
+    x_min -= self.get_margin(x_min, self.left)
+    y_max += self.get_margin(y_max, self.bottom)
+    x_max += self.get_margin(x_max, self.right)
 
-  def recalculate_coordinates(self, y_min, x_min, y_max, x_max):
-     y_min -= self.get_margin(y_min, self.top)
-     x_min -= self.get_margin(x_min, self.left)
-     y_max += self.get_margin(y_max, self.bottom)
-     x_max += self.get_margin(x_max, self.right)
-
-     return y_min, x_min, y_max, x_max  
+    y_min = self._put_coordinates_in_range(y_min, height)
+    x_min = self._put_coordinates_in_range(x_min, width)
+    y_max = self._put_coordinates_in_range(y_max, height)
+    x_max = self._put_coordinates_in_range(x_max, width)
+    return y_min, x_min, y_max, x_max  
    
 
 def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> MatLike:
@@ -126,7 +132,7 @@ def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> Mat
   y_max = int(detections[2] * img.shape[0])
   x_max = int(detections[3] * img.shape[1])
 
-  y_min, x_min, y_max, x_max = margin.recalculate_coordinates(y_min, x_min, y_max, x_max)
+  y_min, x_min, y_max, x_max = margin.recalculate_coordinates(y_min, x_min, y_max, x_max, img.shape[0], img.shape[1])
   return img[y_min:y_max, x_min:x_max]
 
 BLAZEFACE_INPUT_SIZE = (128, 128)
@@ -140,36 +146,53 @@ class PhaseOne:
 
   def _predict(self, img: MatLike):
     downsized_img = downsize_img(img, BLAZEFACE_INPUT_SIZE)
-    # view_img(downsized_img)
     detections = self.model.predict_on_image(downsized_img)
-    print(detections)
     return detections
   
-  def run(self, img: MatLike) -> MatLike | str:
+  def run(self, img: MatLike) -> tuple[str, MatLike]:
     detections = self._predict(img)
 
     if len(detections) == 0:
-      return "No face detected"
+      return "Warning: No face detected. Returning original image", img
     
     biggest_face_idx = get_idx_of_biggest_face(detections)
-    img = reset_face_angle(img, detections[biggest_face_idx])
+    rotated = reset_face_angle(img, detections[biggest_face_idx])
     
-    detections = self._predict(img)
+    detections = self._predict(rotated)
+    if len(detections) == 0:
+      return "Warning: Couldn't find face after resetting the angle. Returning original image", img
+    
     biggest_face_idx = get_idx_of_biggest_face(detections)
-    img = crop_face_from_img(img, detections[biggest_face_idx], self.margin)
+    return "", crop_face_from_img(rotated, detections[biggest_face_idx], self.margin)
 
-    return img
+def handle_window():
+  key = cv2.waitKey(0)
+  cv2.destroyWindow("Face")
 
+  if key == ord('q'):
+    return 'exit'
+  return 'continue'
 
+import glob
+from typing import cast
 if __name__ == "__main__": 
    # dont run it from project root. Enter any folder like /utils/ or /src/ 
-   phaseOne = PhaseOne()
-   img = cv2.imread("../assets/the-office-handshake.jpg")
-   img = reverse_channels(img)
-   out = phaseOne.run(img)
-   if isinstance(out, str):
-     print(out)
-     exit()
+  phaseOne = PhaseOne()
 
-   cv2.imshow("Face", cv2.cvtColor(out, cv2.COLOR_BGR2RGB)) 
-   cv2.waitKey(0)
+  img_paths = glob.glob( '../datasets/test_train/*/*/*.jpg')
+  print("found", len(img_paths), "images")
+
+  for i, img_path in enumerate(img_paths):
+    img = cv2.imread(img_path)
+    img = reverse_channels(img)
+    msg, out = phaseOne.run(img)
+
+    if msg:
+      print(f"{i}: {img_path} {msg}")
+
+    try:
+      cv2.imwrite(img_path, cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+    except Exception as e:
+      print(e)
+      cv2.imshow("Face", cv2.cvtColor(img, cv2.COLOR_BGR2RGB)) 
+      if handle_window() == 'exit': break
