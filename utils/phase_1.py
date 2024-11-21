@@ -1,4 +1,5 @@
 import cv2
+import glob
 import numpy as np
 from cv2.typing import MatLike
 from matplotlib.patches import Circle, Rectangle
@@ -124,7 +125,6 @@ class Margin:
     y_max = self._put_coordinates_in_range(y_max, height)
     x_max = self._put_coordinates_in_range(x_max, width)
     return y_min, x_min, y_max, x_max  
-   
 
 def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> MatLike:
   y_min = int(detections[0] * img.shape[0])
@@ -136,6 +136,30 @@ def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> Mat
   return img[y_min:y_max, x_min:x_max]
 
 BLAZEFACE_INPUT_SIZE = (128, 128)
+
+def create_padding(height: int, width: int, channels, dtype=np.uint8) -> np.ndarray:
+  return np.zeros((height, width, channels), dtype=dtype)
+
+def make_image_rectangle(img: MatLike) -> MatLike:
+  h, w, c = img.shape
+  if h > w:
+    pad_w = h - w
+    pad_left_w = pad_w // 2
+    pad_right_w = pad_w - pad_left_w
+
+    padding_left = create_padding(h, pad_left_w, c)
+    padding_right = create_padding(h, pad_right_w, c)
+    return np.hstack([padding_left, img, padding_right])
+
+  elif w > h: 
+    pad_h = w - h
+    pad_top_h = pad_h // 2
+    pad_bot_h = pad_h - pad_top_h
+
+    padding_top = create_padding(pad_top_h, w, c)
+    padding_bot = create_padding(pad_bot_h, w, c)
+    return np.vstack([padding_top, img, padding_bot])
+  return img
 
 class PhaseOne:
   def __init__(self, margin: Margin = Margin("30%", 5, 15, 5)):
@@ -163,7 +187,8 @@ class PhaseOne:
       return "Warning: Couldn't find face after resetting the angle. Returning original image", img
     
     biggest_face_idx = get_idx_of_biggest_face(detections)
-    return "", crop_face_from_img(rotated, detections[biggest_face_idx], self.margin)
+    cropped_image = crop_face_from_img(rotated, detections[biggest_face_idx], self.margin)
+    return "", make_image_rectangle(cropped_image)
 
 def handle_window():
   key = cv2.waitKey(0)
@@ -173,8 +198,6 @@ def handle_window():
     return 'exit'
   return 'continue'
 
-import glob
-from typing import cast
 if __name__ == "__main__": 
    # dont run it from project root. Enter any folder like /utils/ or /src/ 
   phaseOne = PhaseOne()
