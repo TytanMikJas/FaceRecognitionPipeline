@@ -1,6 +1,7 @@
 import cv2
 import glob
 import numpy as np
+from typing import Generator
 from cv2.typing import MatLike
 from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
@@ -10,20 +11,22 @@ import sys
 sys.path.append('./../')
 from utils.libs.BlazeFace.blazeface import BlazeFace
 
+def take_photo_from_camera(camera: cv2.VideoCapture) -> Generator[MatLike, None, None]:
+  while True:
+    if not camera.isOpened():
+      raise Exception("Could not open video device")
 
-def take_photo() -> MatLike: # type: ignore
-  camera = cv2.VideoCapture(0)
-  if not camera.isOpened():
-    raise Exception("Could not open video device")
-  ok = False
-  while not ok:
     ok, frame = camera.read()
     if not ok:
       continue
-    
-    camera.release()
-    return frame
-  
+    yield frame
+
+def take_photo() -> MatLike: 
+  camera = cv2.VideoCapture(0)
+  frame = next(take_photo_from_camera(camera))
+  camera.release()
+  return frame
+
 def reverse_channels(img: MatLike) -> MatLike:
   return img[:, :, ::-1] # equivalent to cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
