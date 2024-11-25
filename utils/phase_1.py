@@ -163,7 +163,7 @@ def make_image_rectangle(img: MatLike) -> MatLike:
   return img
 
 class PhaseOne:
-  def __init__(self, margin: Margin = Margin("30%", 5, 15, 5)):
+  def __init__(self, margin: Margin = Margin("30%", 30, 30, 5)):
     self.device = get_torch_device()
     self.margin = margin 
     self.model = load_blazeface("../utils/libs/BlazeFace/", self.device)
@@ -175,15 +175,19 @@ class PhaseOne:
     return detections
   
   def run(self, img: MatLike) -> tuple[str, MatLike]:
-    detections = self._predict(img)
+    padded_img = make_image_rectangle(img)
+
+    downsized = downsize_img(padded_img, BLAZEFACE_INPUT_SIZE)
+    detections = self._predict(downsized)
 
     if len(detections) == 0:
       return "Warning: No face detected. Returning original image", img
     
     biggest_face_idx = get_idx_of_biggest_face(detections)
-    rotated = reset_face_angle(img, detections[biggest_face_idx])
-    
-    detections = self._predict(rotated)
+    rotated = reset_face_angle(padded_img, detections[biggest_face_idx])
+
+    downsized = downsize_img(rotated, BLAZEFACE_INPUT_SIZE) 
+    detections = self._predict(downsized)
     if len(detections) == 0:
       return "Warning: Couldn't find face after resetting the angle. Returning original image", img
     
@@ -203,7 +207,7 @@ if __name__ == "__main__":
    # dont run it from project root. Enter any folder like /utils/ or /src/ 
   phaseOne = PhaseOne()
 
-  img_paths = glob.glob( '../datasets/test_train/*/*/*.jpg')
+  img_paths = glob.glob('../assets/model2.jpg')
   print("found", len(img_paths), "images")
 
   for i, img_path in enumerate(img_paths):
@@ -214,9 +218,5 @@ if __name__ == "__main__":
     if msg:
       print(f"{i}: {img_path} {msg}")
 
-    try:
-      cv2.imwrite(img_path, cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
-    except Exception as e:
-      print(e)
-      cv2.imshow("Face", cv2.cvtColor(img, cv2.COLOR_BGR2RGB)) 
-      if handle_window() == 'exit': break
+    cv2.imshow("Face", cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+    if handle_window() == 'exit': break
