@@ -47,8 +47,9 @@ def configure_params(model, min_score_thresh, min_suppression_threshold):
   model.min_score_thresh = min_score_thresh
   model.min_suppression_threshold = min_suppression_threshold
 
-def plot_detections(img, detections, with_keypoints=True):
+def plot_detections(img, detections, with_keypoints=True, title="Detections"):
     _, ax = plt.subplots(1, figsize=(5, 5))
+    ax.set_title(title)
     ax.grid(False)
     ax.imshow(img)
     
