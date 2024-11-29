@@ -1,7 +1,7 @@
 
 # Face Recognition Pipeline
-[GDocs](https://docs.google.com/document/d/14on8KvRoEUYM7ZxJZAl3welFy0YEp0YTtSzomVr_4aU/edit) |
-
+[PDF Research Report](https://github.com/Jakub-Ner/FaceRecognitionPipeline/blob/master/Face%20Recognition%20Pipeline.pdf) |
+[GDocs](https://docs.google.com/document/d/14on8KvRoEUYM7ZxJZAl3welFy0YEp0YTtSzomVr_4aU/edit)
 
 ## File structure
 - `assets/` - contains resources like images that are used in markdown files
