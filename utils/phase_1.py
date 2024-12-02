@@ -42,7 +42,7 @@ def get_torch_device():
   print("PyTorch version:", torch.__version__)
   print("CUDA version:", torch.version.cuda)
   print("cuDNN version:", torch.backends.cudnn.version())
-  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+  device = torch.device("cpu")
   return device
 
 def load_blazeface(path:str, device: torch.device) -> BlazeFace:
@@ -171,7 +171,7 @@ def make_image_rectangle(img: np.ndarray) -> np.ndarray:
   return img
 
 class PhaseOne:
-  def __init__(self, margin: Margin = Margin("30%", 30, 30, 5)):
+  def __init__(self, margin: Margin = Margin("30%", 30, 30, 30)):
     self.device = get_torch_device()
     self.margin = margin 
     self.model = load_blazeface("../utils/libs/BlazeFace/", self.device)

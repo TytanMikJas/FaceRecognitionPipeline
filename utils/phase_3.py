@@ -475,7 +475,7 @@ def who_is_it(img, database, model) -> tuple[float, str]:
         min_dist -- the minimum distance between image_path encoding and the encodings from the database
         identity -- string, the name prediction for the person on image_path
     """
-    encoding =  img_to_encoding_from_img(img, model)
+    encoding =  img_to_encoding(img, model)
 
     min_dist = 100
     identity  = UNKNOWN
@@ -496,16 +496,17 @@ def who_is_it(img, database, model) -> tuple[float, str]:
 
 class PhaseThree:
   def __load_db(self, db_path):
-    known_ppl = glob.glob(f'{db_path}/*')
+    known_ppl = glob.glob(f'..\database\*')
     self.database = {}
     for person_img in known_ppl:
-        person = person_img.split('/')[2].split('.')[0]
+        person = person_img.split('\\')[2].split('.')[0]
         self.database[person] = img_to_encoding(person_img, self.model)
     
   def __init__(self, db_path: str) -> None:
     K.set_image_data_format('channels_first')
     self.model = faceRecoModel(input_shape = (3, 96, 96))
     self.model.compile(optimizer = 'adam', loss = triplet_loss_function, metrics = ['accuracy'])
+    load_weights_from_FaceNet(self.model)
     self.__load_db(db_path)
 
   def recognize(self, img: np.ndarray) -> tuple[float, str]:

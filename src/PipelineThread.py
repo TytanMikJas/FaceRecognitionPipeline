@@ -23,7 +23,7 @@ class PipelineThread(Thread):
       self.run_pipeline()
 
   def run_phase_1(self, img: np.ndarray) -> None|np.ndarray:
-      msg, img = self.phase_1.run(img.copy()) 
+      msg, img = self.phase_1.run(img) 
       if msg:
         return None
       self.app_state.msgs.append(Msg("Face detected"))
@@ -53,7 +53,7 @@ class PipelineThread(Thread):
       recent_img = self.app_state.photo
 
       if recent_img is None:
-        time.sleep(0.1)
+        time.sleep(1)
         return 
 
       cropped_face = self.run_phase_1(recent_img)
@@ -73,7 +73,7 @@ class PipelineThread(Thread):
 
       self.run_phase3(cropped_face)
 
-      time.sleep(STAGE_DELAY * 2)
+      time.sleep(STAGE_DELAY * 5)
       self.app_state.use_camera = True
       
 
