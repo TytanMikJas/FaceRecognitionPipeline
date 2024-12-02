@@ -3,21 +3,21 @@ from PIL import Image, ImageTk
 from tkinter import font
 import sys
 from typing import Literal
-import cv2
 
 from constants import CAMERA, FONT_SIZE, PATIENCE
 
 sys.path.append('./../')
 from PipelineThread import PipelineThread
-from utils.phase_1 import take_photo_from_camera, reverse_channels
+from utils.phase_1 import reverse_channels
 from AppState import AppState
+from utils.Camera import Camera
 
 
 class CameraView(tk.Canvas):
   def __init__(self, master, **kwargs):
     super().__init__(master, **kwargs)
-    self.camera = cv2.VideoCapture(CAMERA)
-    self.photo_gen = take_photo_from_camera(self.camera, PATIENCE)
+    self.camera = Camera(CAMERA)
+    self.camera.start()
     
     self.img_tk: None|ImageTk.PhotoImage = None
     self.app_state = AppState(kwargs['width'], kwargs['height'])
@@ -33,7 +33,7 @@ class CameraView(tk.Canvas):
     self.create_text(10, self.coursor_y_pos, text=text, fill=fill, font=self.font, anchor=anchor)
   
   def update_photo_with_camera(self) -> None:
-    self.app_state.photo = reverse_channels(next(self.photo_gen))
+    self.app_state.photo = reverse_channels(self.camera.get_last_frame())
 
   def draw_msgs(self) -> None:
     self.coursor_y_pos = 0
@@ -57,7 +57,7 @@ class CameraView(tk.Canvas):
     self.after(1, self.pack)
 
   def destroy(self):
-    self.camera.release()
+    self.camera.join()
     self.app_state.pipeline_flag = False
     self.pipeline_thread.join()
     super().destroy()
