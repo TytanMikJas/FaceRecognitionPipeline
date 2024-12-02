@@ -1,36 +1,41 @@
 import cv2
 import glob
 import numpy as np
-from typing import Generator
-from cv2.typing import MatLike
+from typing import Generator, Literal
 from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
 import torch
 
 import sys
 sys.path.append('./../')
+
 from utils.libs.BlazeFace.blazeface import BlazeFace
 
-def take_photo_from_camera(camera: cv2.VideoCapture) -> Generator[MatLike, None, None]:
+def take_photo_from_camera(camera: cv2.VideoCapture, patience=3) -> Generator[np.ndarray, None, None]:
+  fail_count = 0
   while True:
     if not camera.isOpened():
       raise Exception("Could not open video device")
 
     ok, frame = camera.read()
+    if fail_count > patience:
+      raise EOFError("Camera failed to give frames.")
     if not ok:
+      fail_count += 1
       continue
+    fail_count = 0
     yield frame
 
-def take_photo() -> MatLike: 
+def take_photo() -> np.ndarray: 
   camera = cv2.VideoCapture(0)
   frame = next(take_photo_from_camera(camera))
   camera.release()
   return frame
 
-def reverse_channels(img: MatLike) -> MatLike:
+def reverse_channels(img: np.ndarray) -> np.ndarray:
   return img[:, :, ::-1] # equivalent to cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def downsize_img(img: MatLike, target_size: tuple[int, int]):
+def downsize_img(img: np.ndarray, target_size: tuple[int, int]):
   return cv2.resize(img, target_size)
 
 def get_torch_device():
@@ -88,7 +93,7 @@ def plot_detections(img, detections, with_keypoints=True, title="Detections"):
 def get_idx_of_biggest_face(detections: np.ndarray) -> int: 
    return int(np.apply_along_axis(lambda x: (x[2] - x[0]) * (x[3] - x[1]), 1, detections).argmax())
 
-def reset_face_angle(img: MatLike, detections: list) -> MatLike:
+def reset_face_angle(img: np.ndarray, detections: list) -> np.ndarray:
   right_eye = (int(detections[4] * img.shape[1]), int(detections[5] * img.shape[0]))
   left_eye = (int(detections[6] * img.shape[1]), int(detections[7] * img.shape[0]))
 
@@ -130,7 +135,7 @@ class Margin:
     x_max = self._put_coordinates_in_range(x_max, width)
     return y_min, x_min, y_max, x_max  
 
-def crop_face_from_img(img: MatLike, detections: MatLike, margin: Margin) -> MatLike:
+def crop_face_from_img(img: np.ndarray, detections: np.ndarray, margin: Margin) -> np.ndarray:
   y_min = int(detections[0] * img.shape[0])
   x_min = int(detections[1] * img.shape[1])
   y_max = int(detections[2] * img.shape[0])
@@ -144,7 +149,7 @@ BLAZEFACE_INPUT_SIZE = (128, 128)
 def create_padding(height: int, width: int, channels, dtype=np.uint8) -> np.ndarray:
   return np.zeros((height, width, channels), dtype=dtype)
 
-def make_image_rectangle(img: MatLike) -> MatLike:
+def make_image_rectangle(img: np.ndarray) -> np.ndarray:
   h, w, c = img.shape
   if h > w:
     pad_w = h - w
@@ -172,12 +177,12 @@ class PhaseOne:
     self.model = load_blazeface("../utils/libs/BlazeFace/", self.device)
     configure_params(self.model, 0.75, 0.3)
 
-  def _predict(self, img: MatLike):
+  def _predict(self, img: np.ndarray):
     downsized_img = downsize_img(img, BLAZEFACE_INPUT_SIZE)
     detections = self.model.predict_on_image(downsized_img)
     return detections
   
-  def run(self, img: MatLike) -> tuple[str, MatLike]:
+  def run(self, img: np.ndarray) -> tuple[str, np.ndarray]:
     padded_img = make_image_rectangle(img)
 
     downsized = downsize_img(padded_img, BLAZEFACE_INPUT_SIZE)
@@ -206,11 +211,18 @@ def handle_window():
     return 'exit'
   return 'continue'
 
+def handle_action(action_name: Literal['show', 'save'], img: np.ndarray):
+  if action_name == 'show':
+    cv2.imshow("Face", cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+    if handle_window() == 'exit': exit()
+  else:
+    cv2.imwrite(img_path, cv2.cvtColor(out, cv2.COLOR_BGR2RGB)) 
+
 if __name__ == "__main__": 
    # dont run it from project root. Enter any folder like /utils/ or /src/ 
   phaseOne = PhaseOne()
 
-  img_paths = glob.glob('../assets/model2.jpg')
+  img_paths = glob.glob('../database/kuba.jpeg')
   print("found", len(img_paths), "images")
 
   for i, img_path in enumerate(img_paths):
@@ -220,6 +232,4 @@ if __name__ == "__main__":
 
     if msg:
       print(f"{i}: {img_path} {msg}")
-
-    cv2.imshow("Face", cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
-    if handle_window() == 'exit': break
+    handle_action("save", out)

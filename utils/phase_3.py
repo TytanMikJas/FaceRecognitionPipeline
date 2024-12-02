@@ -1,4 +1,5 @@
 import os
+import glob
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -8,7 +9,7 @@ from tensorflow.keras.layers import ( # type: ignore
   Conv2D, ZeroPadding2D, Activation, Input, concatenate, MaxPooling2D, AveragePooling2D, Lambda, Flatten, Dense 
 ) 
 from tensorflow.keras.models import Model # type: ignore
-from tensorflow.keras.layers import BatchNormalization # type: ignore
+from tensorflow.keras.layers import BatchNormalization
 
 K.set_image_data_format('channels_first')
 
@@ -427,3 +428,91 @@ def img_to_encoding(image_path, model):
     x_train = np.array([img])
     embedding = model.predict_on_batch(x_train)
     return embedding
+
+def img_to_encoding_from_img(image, model):
+    img = cv2.resize(image, (96, 96))
+    img = np.around(np.transpose(img, (2,0,1))/255.0, decimals=12)
+    x_train = np.array([img])
+    embedding = model.predict_on_batch(x_train)
+    return embedding
+
+def verify(image_path, identity, database, model):
+    """
+    Function that verifies if the person on the "image_path" image is "identity".
+
+    Arguments:
+        image_path -- path to an image
+        identity -- string, name of the person you'd like to verify the identity. Has to be an employee who works in the office.
+        database -- python dictionary mapping names of allowed people's names (strings) to their encodings (vectors).
+        model -- your Inception model instance in Keras
+
+    Returns:
+        dist -- distance between the image_path and the image of "identity" in the database.
+        valid -- True, if the person is who they claim to be. False otherwise.
+    """
+    encoding = img_to_encoding(image_path, model)
+    dist = np.linalg.norm(database[identity] - encoding)
+
+    if (dist < 1):
+        print("It's " + str(identity) + ", welcome in!")
+        valid = True
+    else:
+        print("It's not " + str(identity) + ", please go away")
+        valid = False
+    return dist, valid
+
+UNKNOWN = "Uknown"
+def who_is_it(img, database, model) -> tuple[float, str]:
+    """
+    Implements face recognition for the office by finding who is the person on the image_path image.
+
+    Arguments:
+        image_path -- path to an image
+        database -- database containing image encodings along with the name of the person on the image
+        model -- your Inception model instance in Keras
+
+    Returns:
+        min_dist -- the minimum distance between image_path encoding and the encodings from the database
+        identity -- string, the name prediction for the person on image_path
+    """
+    encoding =  img_to_encoding_from_img(img, model)
+
+    min_dist = 100
+    identity  = UNKNOWN
+    for (name, db_enc) in database.items():
+
+        dist = np.linalg.norm(db_enc - encoding)
+
+        if (dist < min_dist):
+            min_dist = float(dist)
+            identity = name
+
+    if min_dist > 1:
+        print("Not in the database.")
+    else:
+        print ("it's " + str(identity) + ", the distance is " + str(min_dist))
+    return min_dist, identity
+
+
+class PhaseThree:
+  def __load_db(self, db_path):
+    known_ppl = glob.glob(f'{db_path}/*')
+    self.database = {}
+    for person_img in known_ppl:
+        person = person_img.split('/')[2].split('.')[0]
+        self.database[person] = img_to_encoding(person_img, self.model)
+    
+  def __init__(self, db_path: str) -> None:
+    K.set_image_data_format('channels_first')
+    self.model = faceRecoModel(input_shape = (3, 96, 96))
+    self.model.compile(optimizer = 'adam', loss = triplet_loss_function, metrics = ['accuracy'])
+    self.__load_db(db_path)
+
+  def recognize(self, img: np.ndarray) -> tuple[float, str]:
+    min_dist, identity = who_is_it(img, self.database, self.model)
+    return min_dist, identity
+
+
+if __name__ == '__main__':
+    p3 = PhaseThree('../database')
+    print(p3.database)
