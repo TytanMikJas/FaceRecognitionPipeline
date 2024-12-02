@@ -53,7 +53,7 @@ class PipelineThread(Thread):
       recent_img = self.app_state.photo
 
       if recent_img is None:
-        time.sleep(1)
+        time.sleep(2)
         return 
 
       cropped_face = self.run_phase_1(recent_img)
@@ -67,7 +67,7 @@ class PipelineThread(Thread):
       self.app_state.photo = cropped_face 
       
       if not (proceed := self.run_phase_2(cropped_face)):
-        time.sleep(STAGE_DELAY)
+        time.sleep(STAGE_DELAY * 5)
         self.app_state.use_camera = True
         return
 

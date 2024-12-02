@@ -475,7 +475,7 @@ def who_is_it(img, database, model) -> tuple[float, str]:
         min_dist -- the minimum distance between image_path encoding and the encodings from the database
         identity -- string, the name prediction for the person on image_path
     """
-    encoding =  img_to_encoding(img, model)
+    encoding =  img_to_encoding_from_img(img, model)
 
     min_dist = 100
     identity  = UNKNOWN

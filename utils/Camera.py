@@ -16,7 +16,7 @@ class Camera(Thread):
 
   def get_last_frame(self) -> np.ndarray:
     while self.last_frame is None:
-      time.sleep(0.1)
+      time.sleep(0.2)
     frame = self.last_frame
     self.last_frame = None
     return frame

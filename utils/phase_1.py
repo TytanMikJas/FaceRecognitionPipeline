@@ -167,7 +167,7 @@ def make_image_rectangle(img: np.ndarray) -> np.ndarray:
 
     padding_top = create_padding(pad_top_h, w, c)
     padding_bot = create_padding(pad_bot_h, w, c)
-    return np.vstack([padding_top, img, padding_bot])
+    return img
   return img
 
 class PhaseOne:
