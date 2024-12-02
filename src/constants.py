@@ -1,6 +1,7 @@
 
 ## GENERAL
 # You have to have webCam installed on your phone
+# use CAMERA=0 if want to use default PC camera
 CAMERA: int|str = 'http://192.168.1.141:4747/video'
 PATIENCE = 2
 STAGE_DELAY = 0.5
