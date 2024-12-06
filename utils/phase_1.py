@@ -150,6 +150,7 @@ def create_padding(height: int, width: int, channels, dtype=np.uint8) -> np.ndar
   return np.zeros((height, width, channels), dtype=dtype)
 
 def make_image_rectangle(img: np.ndarray) -> np.ndarray:
+  return img
   h, w, c = img.shape
   if h > w:
     pad_w = h - w
@@ -171,7 +172,7 @@ def make_image_rectangle(img: np.ndarray) -> np.ndarray:
   return img
 
 class PhaseOne:
-  def __init__(self, margin: Margin = Margin("30%", 30, 30, 30)):
+  def __init__(self, margin: Margin = Margin("45%", 30, 30, 0)):
     self.device = get_torch_device()
     self.margin = margin 
     self.model = load_blazeface("../utils/libs/BlazeFace/", self.device)

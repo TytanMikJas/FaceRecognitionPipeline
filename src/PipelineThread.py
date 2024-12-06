@@ -45,7 +45,7 @@ class PipelineThread(Thread):
       if identity == UNKNOWN:
         self.app_state.msgs.append(Msg(f"Could not recognize the person, distance: {dist}"))
       else:
-        self.app_state.msgs.append(Msg(f"Hi {identity}! Uncertainty={round(dist)}", POSITIVE_COLOR))
+        self.app_state.msgs.append(Msg(f"Hi {identity}! Distance={round(dist, 2)}", POSITIVE_COLOR))
 
   def run_pipeline(self)-> None:
       self.app_state.msgs.clear()

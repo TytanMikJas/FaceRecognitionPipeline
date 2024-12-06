@@ -488,7 +488,7 @@ def who_is_it(img, database, model) -> tuple[float, str]:
             identity = name
 
     if min_dist > 1:
-        print("Not in the database.")
+        return min_dist, "Unknown"
     else:
         print ("it's " + str(identity) + ", the distance is " + str(min_dist))
     return min_dist, identity
