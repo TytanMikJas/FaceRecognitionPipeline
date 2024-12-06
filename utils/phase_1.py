@@ -107,6 +107,24 @@ def reset_face_angle(img: np.ndarray, detections: list) -> np.ndarray:
 
   return rotated
 
+def maintain_ratio(y_min, x_min, y_max, x_max, ratio: tuple[int, int]) -> tuple[int, int, int, int]:
+  h = y_max - y_min
+  w = x_max - x_min
+
+  if h * ratio[0] > w * ratio[1]:
+    pad_w = int(h / ratio[1] - w / ratio[0]) 
+    pad_h_left = pad_w // 2
+    x_min -= pad_h_left
+    x_max += pad_w - pad_h_left
+
+  elif h * ratio[0] < w * ratio[1]:
+    pad_h = int(w / ratio[0] - h / ratio[1])
+    pad_w_top = pad_h // 2
+    y_min -= pad_w_top
+    y_max += pad_h - pad_w_top
+
+  return y_min, x_min, y_max, x_max
+
 class Margin:
   def __init__(self, top: int|str, right: int|str, left: int|str, bottom: int|str):
       self.top = top
@@ -122,26 +140,29 @@ class Margin:
   
   def _put_coordinates_in_range(self, value: int, max_value: int):
     return max(0, min(value, max_value))
-  
-  def recalculate_coordinates(self, y_min, x_min, y_max, x_max, height, width):
+
+  def recalculate_coordinates(self, y_min, x_min, y_max, x_max, img_height, img_width, ratio: tuple[int, int]):
     y_min -= self.get_margin(y_min, self.top)
     x_min -= self.get_margin(x_min, self.left)
     y_max += self.get_margin(y_max, self.bottom)
     x_max += self.get_margin(x_max, self.right)
 
-    y_min = self._put_coordinates_in_range(y_min, height)
-    x_min = self._put_coordinates_in_range(x_min, width)
-    y_max = self._put_coordinates_in_range(y_max, height)
-    x_max = self._put_coordinates_in_range(x_max, width)
+    y_min, x_min, y_max, x_max = maintain_ratio(y_min, x_min, y_max, x_max, ratio) 
+
+    y_min = self._put_coordinates_in_range(y_min, img_height)
+    x_min = self._put_coordinates_in_range(x_min, img_width)
+    y_max = self._put_coordinates_in_range(y_max, img_height)
+    x_max = self._put_coordinates_in_range(x_max, img_width)
     return y_min, x_min, y_max, x_max  
 
-def crop_face_from_img(img: np.ndarray, detections: np.ndarray, margin: Margin) -> np.ndarray:
+
+def crop_face_from_img(img: np.ndarray, detections: np.ndarray, margin: Margin, ratio: tuple[int, int]) -> np.ndarray:
   y_min = int(detections[0] * img.shape[0])
   x_min = int(detections[1] * img.shape[1])
   y_max = int(detections[2] * img.shape[0])
   x_max = int(detections[3] * img.shape[1])
 
-  y_min, x_min, y_max, x_max = margin.recalculate_coordinates(y_min, x_min, y_max, x_max, img.shape[0], img.shape[1])
+  y_min, x_min, y_max, x_max = margin.recalculate_coordinates(y_min, x_min, y_max, x_max, img.shape[0], img.shape[1], ratio)
   return img[y_min:y_max, x_min:x_max]
 
 BLAZEFACE_INPUT_SIZE = (128, 128)
@@ -200,8 +221,8 @@ class PhaseOne:
       return "Warning: Couldn't find face after resetting the angle. Returning original image", img
     
     biggest_face_idx = get_idx_of_biggest_face(detections)
-    cropped_image = crop_face_from_img(rotated, detections[biggest_face_idx], self.margin)
-    return "", make_image_rectangle(cropped_image)
+    cropped_image = crop_face_from_img(rotated, detections[biggest_face_idx], self.margin, (1,1))
+    return "", cropped_image
 
 def handle_window():
   key = cv2.waitKey(0)
