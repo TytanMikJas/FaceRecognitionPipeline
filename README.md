@@ -2,7 +2,7 @@
 # Face Recognition Pipeline
 [PDF Research Report](https://github.com/Jakub-Ner/FaceRecognitionPipeline/blob/master/Face%20Recognition%20Pipeline.pdf) |
 [GDocs](https://docs.google.com/document/d/14on8KvRoEUYM7ZxJZAl3welFy0YEp0YTtSzomVr_4aU/edit) |
-[Pipeline Demo.mp4](https://youtu.be/Ae4rrXVnkx0)
+[Pipeline Demo.mp4](https://youtu.be/3lexTgoDxGY)
 
 
 ## File structure
