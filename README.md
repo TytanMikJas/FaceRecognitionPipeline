@@ -1,8 +1,9 @@
 
 # Face Recognition Pipeline
+## [Pipeline Demo shortfilm :)](https://www.linkedin.com/posts/miko%C5%82aj-jastrz%C4%99bski_working-with-jakub-ner-weve-crafted-a-cutting-edge-activity-7273293921928032256--IQf?utm_source=share&utm_medium=member_desktop&rcm=ACoAAEGHAuMBggZuolXhq2eVRtuHocgCJLrFfTo)
 [PDF Research Report](https://github.com/Jakub-Ner/FaceRecognitionPipeline/blob/master/Face%20Recognition%20Pipeline.pdf) |
 [GDocs](https://docs.google.com/document/d/14on8KvRoEUYM7ZxJZAl3welFy0YEp0YTtSzomVr_4aU/edit) |
-[Pipeline Demo.mp4](https://youtu.be/3lexTgoDxGY)
+
 
 
 ## File structure
